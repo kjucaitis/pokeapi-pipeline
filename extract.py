@@ -1,4 +1,5 @@
 import json
+import time
 from pathlib import Path
 
 import requests
@@ -10,12 +11,22 @@ response.raise_for_status()
 pokemon_list = response.json()["results"]
 
 print(f"Found {len(pokemon_list)} Pokemon")
-print(pokemon_list[:3])
 
-output_dir = Path("data/raw")
+output_dir = Path("data/raw/pokemon")
 output_dir.mkdir(parents=True, exist_ok=True)
 
-output_file = output_dir / "pokemon_list.json"
-output_file.write_text(json.dumps(pokemon_list, indent=2))
+for pokemon in pokemon_list:
+    output_file = output_dir / f"{pokemon['name']}.json"
 
-print(f"Saved {output_file}")
+    if output_file.exists():
+        continue
+
+    response = requests.get(pokemon["url"])
+    response.raise_for_status()
+
+    output_file.write_text(json.dumps(response.json(), indent=2))
+    print(f"Saved {pokemon['name']}")
+
+    time.sleep(0.1)
+
+print("Done")
