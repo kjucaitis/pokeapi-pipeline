@@ -4,11 +4,22 @@ from pathlib import Path
 
 import requests
 
-list_url = "https://pokeapi.co/api/v2/pokemon?limit=2000"
 
-response = requests.get(list_url)
-response.raise_for_status()
-pokemon_list = response.json()["results"]
+def get_json(url, retries=3):
+    for attempt in range(1, retries + 1):
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as error:
+            print(f"Attempt {attempt} failed for {url}: {error}")
+            if attempt == retries:
+                raise
+            time.sleep(5)
+
+
+list_url = "https://pokeapi.co/api/v2/pokemon?limit=2000"
+pokemon_list = get_json(list_url)["results"]
 
 print(f"Found {len(pokemon_list)} Pokemon")
 
@@ -21,10 +32,8 @@ for pokemon in pokemon_list:
     if output_file.exists():
         continue
 
-    response = requests.get(pokemon["url"])
-    response.raise_for_status()
-
-    output_file.write_text(json.dumps(response.json(), indent=2))
+    data = get_json(pokemon["url"])
+    output_file.write_text(json.dumps(data, indent=2))
     print(f"Saved {pokemon['name']}")
 
     time.sleep(0.1)
