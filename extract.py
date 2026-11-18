@@ -3,16 +3,19 @@ from pathlib import Path
 
 import requests
 
-url = "https://pokeapi.co/api/v2/pokemon/bulbasaur"
+list_url = "https://pokeapi.co/api/v2/pokemon?limit=2000"
 
-response = requests.get(url)
+response = requests.get(list_url)
 response.raise_for_status()
-data = response.json()
+pokemon_list = response.json()["results"]
+
+print(f"Found {len(pokemon_list)} Pokemon")
+print(pokemon_list[:3])
 
 output_dir = Path("data/raw")
 output_dir.mkdir(parents=True, exist_ok=True)
 
-output_file = output_dir / f"{data['name']}.json"
-output_file.write_text(json.dumps(data, indent=2))
+output_file = output_dir / "pokemon_list.json"
+output_file.write_text(json.dumps(pokemon_list, indent=2))
 
 print(f"Saved {output_file}")
